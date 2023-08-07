@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,13 +28,35 @@ async function run() {
       .db("cleanCo")
       .collection("service");
 
-      app.get("/service", async (req, res) => {
+      app.get("/get-service", async (req, res) => {
         const query = {};
         const cursor = servicesCollection.find(query);
         const services = await cursor.toArray();
         console.log(services)
         res.send(services);
       });
+
+      app.post('/add-service',async(req,res)=>{
+        const data = req.body;
+        const result = await servicesCollection.insertOne(data);
+        res.send(result) 
+      })
+
+      app.put('/update-service/:id',async(req,res)=>{
+        const { id } = req.params;
+        const data = req.body;
+        const filter = { _id:ObjectId(id) };
+        const options = { upsert: true };
+        const updateDoc = { $set: data,};
+        const result = await servicesCollection.updateOne(
+          filter,
+          updateDoc,
+          options
+        );
+  
+        res.send(result);
+      })
+      
 
   } finally {
     // Ensures that the client will close when you finish/error
